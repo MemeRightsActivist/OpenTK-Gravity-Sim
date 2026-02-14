@@ -138,6 +138,8 @@ namespace OpenTKSim
             GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
             GL.BindVertexArray(0);
 
+            Grid.GridA();
+
             // Grid VAO
             gridVAO = GL.GenVertexArray();
             GL.BindVertexArray(gridVAO);
@@ -145,7 +147,12 @@ namespace OpenTKSim
             // Grid VBO
             gridVBO = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, gridVBO);
-            GL.BufferData(BufferTarget.ArrayBuffer, grid.gridLineVertices.Length * sizeof(float), grid.gridLineVertices, BufferUsageHint.StaticDraw);
+            GL.BufferData(BufferTarget.ArrayBuffer, grid.gridVertices.Length * sizeof(float), grid.gridVertices, BufferUsageHint.StaticDraw);
+
+            // Grid EBO (element buffer) for line indices
+            int gridEBO = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, gridEBO);
+            GL.BufferData(BufferTarget.ElementArrayBuffer, grid.gridIndices.Length * sizeof(uint), grid.gridIndices, BufferUsageHint.StaticDraw);
 
             // Position attribute (same as sphere's attrib 0)
             GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
@@ -154,7 +161,6 @@ namespace OpenTKSim
             // Unbind
             GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
             GL.BindVertexArray(0);
-            Grid.GridA();
 
         }
 
@@ -204,15 +210,16 @@ namespace OpenTKSim
 
             // === Grid drawing ===
             gridShader.Use();
-            loc = GL.GetUniformLocation(shader.Handle, "model");
+            loc = GL.GetUniformLocation(gridShader.Handle, "model");
             GL.UniformMatrix4(loc, false, ref model);
-            loc = GL.GetUniformLocation(shader.Handle, "view");
+            loc = GL.GetUniformLocation(gridShader.Handle, "view");
             GL.UniformMatrix4(loc, false, ref view);
-            loc = GL.GetUniformLocation(shader.Handle, "projection");
+            loc = GL.GetUniformLocation(gridShader.Handle, "projection");
             GL.UniformMatrix4(loc, false, ref projection);
 
             GL.BindVertexArray(gridVAO);
-            GL.DrawArrays(PrimitiveType.Lines, 0, grid.gridLineVertices.Length / 3);
+            // Draw grid as lines using the element buffer
+            GL.DrawElements(PrimitiveType.Lines, grid.gridIndices.Length, DrawElementsType.UnsignedInt, IntPtr.Zero);
 
             //GL.DrawElements(PrimitiveType.Triangles, gridQuadIndices.Length, DrawElementsType.UnsignedInt, IntPtr.Zero);
 

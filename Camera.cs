@@ -9,6 +9,7 @@ public class Camera
 
     public float yaw = -90f;
     public float pitch = 10f;
+    public int scrollSpeed = 50;
 
     public float distance = 100f;
 
@@ -53,7 +54,7 @@ public class Camera
         // Zoom
         if (mb.ScrollDelta.Y != 0)
         {
-            distance -= mb.ScrollDelta.Y * 10f;
+            distance -= mb.ScrollDelta.Y * scrollSpeed;
             distance = Math.Clamp(distance, 0.1f, 10000f);
         }
 

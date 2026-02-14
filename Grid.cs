@@ -10,83 +10,70 @@ namespace OpenTKSim
 {
     public class Grid
     {
-        int gridVAO;
-        int gridVBO;
-        int gridEBO;
-
-
-        int gridLines;
-        public float[] gridLineVertices;
-        public static int[] secondVerts;
-        float[] square;
-        int squareN;
-        float gridSpacing;
-        float gridLength;
+        public float[] gridVertices;
+        public int gridSize = 500;
+        float gridSpacing = 100f;
+        // Number of vertices per side (2 * gridSize because loop runs from -gridSize..gridSize-1)
+        public int side;
+        // Indices to draw grid lines as line segments (pairs of vertex indices)
+        public uint[] gridIndices;
 
         public Grid()
         {
-            // Build Grid
-            gridSpacing = 30f;
-            gridLines = 1000;
-            gridLength = 10000f;
-            gridLineVertices = new float[gridLines * 12];
-            for (int i = 0; i < gridLineVertices.Length / 2; i += 6)
+            gridVertices = new float[gridSize * gridSize * 12];
+            int scroll = 0;
+            for (int i = -gridSize; i < gridSize; i++)
             {
-                gridLineVertices[i] = gridLength;
-                gridLineVertices[i + 1] = 0.0f;
-                gridLineVertices[i + 2] = ((i / 6) * gridSpacing) - ((gridLines * gridSpacing) / 2);
-                gridLineVertices[i + 3] = -gridLength;
-                gridLineVertices[i + 4] = 0.0f;
-                gridLineVertices[i + 5] = ((i / 6) * gridSpacing) - ((gridLines * gridSpacing) / 2);
-            }
-
-            for (int i = gridLineVertices.Length / 2; i < gridLineVertices.Length; i += 6)
-            {
-                gridLineVertices[i] = (((i - (gridLineVertices.Length / 2)) / 6) * gridSpacing) - ((gridLines * gridSpacing) / 2);
-                gridLineVertices[i + 1] = 0.0f;
-                gridLineVertices[i + 2] = gridLength;
-                gridLineVertices[i + 3] = (((i - (gridLineVertices.Length / 2)) / 6) * gridSpacing) - ((gridLines * gridSpacing) / 2);
-                gridLineVertices[i + 4] = 0.0f;
-                gridLineVertices[i + 5] = -gridLength;
-            }
-
-            squareN = 128;
-            square = new float[squareN * squareN * 3];
-            for (int i = 0; i < squareN; i++)
-            {
-                for (int j = 0; j < squareN; j++)
+                for (int j = -gridSize; j < gridSize; j++)
                 {
-                    // Calculate starting index for this (i,j) point
-                    int index = (i * squareN + j) * 3;
+                    gridVertices[scroll] = (float)i * gridSpacing;
+                    gridVertices[scroll + 1] = 0f;
+                    gridVertices[scroll + 2] = (float)j * gridSpacing;
 
-                    square[index + 0] = (float)i;     // x or whatever coordinate
-                    square[index + 1] = (float)j;     // y or z
-                    square[index + 2] = 0.0f;         // z or whatever
-                                                      //Console.WriteLine($"{(float)i} {(float)j} {0.0f} Yeah");
+                    //Console.WriteLine($"{(float)i} {(float)j} {0.0f} Yeah");
+                    scroll += 3;
+                }
+            }
+
+            // Build index buffer for drawing grid as line segments (wireframe)
+            // side = number of vertices per side
+            side = 2 * gridSize;
+
+            // For each row there are (side - 1) horizontal segments -> side * (side - 1)
+            // Same for vertical segments. Total segments = 2 * side * (side - 1)
+            // Each segment is two indices, so total indices = 4 * side * (side - 1)
+            int indicesCount = 4 * side * (side - 1);
+            gridIndices = new uint[indicesCount];
+            int idx = 0;
+
+            // Horizontal segments (left -> right)
+            for (int r = 0; r < side; r++)
+            {
+                for (int c = 0; c < side - 1; c++)
+                {
+                    uint a = (uint)(r * side + c);
+                    uint b = (uint)(r * side + c + 1);
+                    gridIndices[idx++] = a;
+                    gridIndices[idx++] = b;
+                }
+            }
+
+            // Vertical segments (top -> bottom)
+            for (int c = 0; c < side; c++)
+            {
+                for (int r = 0; r < side - 1; r++)
+                {
+                    uint a = (uint)(r * side + c);
+                    uint b = (uint)((r + 1) * side + c);
+                    gridIndices[idx++] = a;
+                    gridIndices[idx++] = b;
                 }
             }
         }
 
         public static void GridA()
         {
-            secondVerts = new int[1000 * 1000 * 2];
-            int scroll = 0;
-            for (int i = 0; i < 1000; i++)
-            {
-                for (int j = 0; j < 1000; j++)
-                {
-                    secondVerts[scroll] = i;
-                    secondVerts[scroll + 1] = j;
-                    //Console.WriteLine($"{(float)i} {(float)j} {0.0f} Yeah");
-                    scroll += 2;
-                }
-            }
-
-            Console.WriteLine(secondVerts.Length);
-            int width = 1000;
-            var pairs = secondVerts.Chunk(2).Select(p => $"({p[0]},{p[1]})");
-            foreach (var row in pairs.Chunk(width))
-                Console.WriteLine(string.Join(" ", row));
+            
         }
     }
 }
