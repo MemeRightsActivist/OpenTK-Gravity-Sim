@@ -60,6 +60,6 @@ public class Camera
 
         UpdatePosition();
         UpdateView();
-        //Console.WriteLine(camPos.Round());
+        
     }
 }

@@ -1,4 +1,5 @@
 ﻿using OpenTK.Graphics.OpenGL4;
+using ScottPlot.MultiplotLayouts;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -30,7 +31,7 @@ namespace OpenTKSim
                     gridVertices[scroll + 1] = 0f;
                     gridVertices[scroll + 2] = (float)j * gridSpacing;
 
-                    //Console.WriteLine($"{(float)i} {(float)j} {0.0f} Yeah");
+                    
                     scroll += 3;
                 }
             }
@@ -70,6 +71,8 @@ namespace OpenTKSim
                 }
             }
         }
+
+        
 
         public static void GridA()
         {

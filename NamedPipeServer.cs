@@ -19,7 +19,7 @@ public class PipeServer
         writer.WriteLine("Server has been established");
         //writer.Flush(); // Ensure the message is sent immediately
         
-        //Console.WriteLine($"Server: Sent message: '{message}'");
+        
         
     }
 

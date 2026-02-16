@@ -90,7 +90,7 @@ public class Physics
 
 
 
-            //Console.WriteLine($"Data written to memory-mapped file. {float.Parse(message)}");
+            
 
         }
     }

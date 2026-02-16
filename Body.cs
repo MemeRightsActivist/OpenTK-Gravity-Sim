@@ -1,9 +1,11 @@
-﻿using System;
+﻿using OpenTK.Mathematics;
+using OpenTKSim;
+using ScottPlot.DataViews;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using OpenTK.Mathematics;
 
 
 
@@ -17,7 +19,14 @@ public class Body
     public Color4 color;
     public string name;
     public Sphere shape;
-    public List<float> path = new List<float>();
+    public List<Vector3> path = new List<Vector3>();
+    public static float[] allPaths;
+    public static int pathIndex = 0;
+    public static int pathCount = 0;
+    public static uint[] trailIndices;
+    public static int trailIndiceCount = 0;
+    public static uint trailIndiceIndex = 0;
+    public static bool trails = true;
 
     public static List<Body> allBodies = new List<Body>();
 
@@ -32,6 +41,10 @@ public class Body
 
         shape = new Sphere(radius, 24, 12, color);
         allBodies.Add(this);
+        allPaths = new float[allBodies.Count * 3 * 100000];
+        trailIndices = new uint[allBodies.Count * 200000];
+
+        
     }
 
     public void OrbitalEnergy()
@@ -46,6 +59,11 @@ public class Body
         }
         orbitalEnergy = (0.5f * this.mass * (float)MathHelper.Pow(velocity.Length, 2)) - energy;
         
+    }
+
+    public void TrailAdd()
+    {
+        this.path.Add(position);
     }
 }
 

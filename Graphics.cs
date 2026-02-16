@@ -27,6 +27,9 @@ namespace OpenTKSim
         public static int instanceVBO;
         public static int gridVAO;
         public static int gridVBO;
+        public static int trailVAO;
+        public static int trailVBO;
+        public static int trailEBO;
         public static Matrix4[] instanceMatrices;
         public static List<int> allVBOs = new List<int>();
         public static Sphere planetSphere;
@@ -44,7 +47,14 @@ namespace OpenTKSim
             grid = new Grid();
             planetSphere = Game.planetSphere;
 
+            for (int i = 0; i < Body.trailIndices.Length; i += 2)
+            {
+                Body.trailIndices[i] = Body.trailIndiceIndex;
+                Body.trailIndices[i + 1] = (uint)(Body.trailIndiceIndex + Body.allBodies.Count);
+                
 
+                Body.trailIndiceIndex++;
+            }
 
 
 
@@ -72,6 +82,9 @@ namespace OpenTKSim
                     Matrix4.CreateScale(Body.allBodies[i].radius) *
                     Matrix4.CreateTranslation(Body.allBodies[i].position);
             }
+
+            
+
 
 
             // === CREATE AND BIND VAO ===
@@ -140,9 +153,12 @@ namespace OpenTKSim
 
             Grid.GridA();
 
+            
+
             // Grid VAO
             gridVAO = GL.GenVertexArray();
             GL.BindVertexArray(gridVAO);
+
 
             // Grid VBO
             gridVBO = GL.GenBuffer();
@@ -162,6 +178,34 @@ namespace OpenTKSim
             GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
             GL.BindVertexArray(0);
 
+            // Trail VAO
+            trailVAO = GL.GenVertexArray();
+            GL.BindVertexArray(trailVAO);
+
+            trailVBO = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ArrayBuffer, trailVBO);
+            GL.BufferData(BufferTarget.ArrayBuffer, Body.allPaths.Length * sizeof(float), Body.allPaths, BufferUsageHint.StaticDraw);
+
+            // === EBO for indices (bound while VAO is active!) ===
+            trailEBO = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, trailEBO);
+            GL.BufferData(BufferTarget.ElementArrayBuffer, Body.trailIndices.Length * sizeof(uint), Body.trailIndices, BufferUsageHint.StaticDraw);
+
+
+
+            // Position attribute (same as sphere's attrib 0)
+            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
+            GL.EnableVertexAttribArray(0);
+
+            // Unbind
+            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+            GL.BindVertexArray(0);
+
+        }
+
+        public static void GetPlanetPositions(Vector4[] posRad, int count)
+        {
+            
         }
 
         public static void RenderUpdate(FrameEventArgs e, Camera camera)
@@ -180,8 +224,7 @@ namespace OpenTKSim
 
 
 
-
-
+             
 
             // === Sphere drawing ===
             shader.Use();
@@ -216,10 +259,15 @@ namespace OpenTKSim
             GL.UniformMatrix4(loc, false, ref view);
             loc = GL.GetUniformLocation(gridShader.Handle, "projection");
             GL.UniformMatrix4(loc, false, ref projection);
+            
 
             GL.BindVertexArray(gridVAO);
             // Draw grid as lines using the element buffer
             GL.DrawElements(PrimitiveType.Lines, grid.gridIndices.Length, DrawElementsType.UnsignedInt, IntPtr.Zero);
+
+            GL.BindVertexArray(trailVAO);
+            // Draw trails as lines
+            GL.DrawElements(PrimitiveType.Lines, Body.trailIndiceCount - Body.allBodies.Count, DrawElementsType.UnsignedInt, IntPtr.Zero);
 
             //GL.DrawElements(PrimitiveType.Triangles, gridQuadIndices.Length, DrawElementsType.UnsignedInt, IntPtr.Zero);
 

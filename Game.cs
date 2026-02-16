@@ -23,7 +23,7 @@ public class Game : GameWindow
     int instanceVBO;
     public int pollTime = 0;
     public int trailTime = 0;
-    
+    public static bool paused = false;
     public Matrix4[] instanceMatrices;
     public List<int> allVBOs = new List<int>();
 
@@ -31,61 +31,86 @@ public class Game : GameWindow
     double then;
     public static int frame = 0;
     public static Process graphs;
-    int planetCam = 0;
+    int planetCam = 1;
 
 
 
-    public Game(int width, int height, string title) : base(GameWindowSettings.Default, new NativeWindowSettings() { Size = (width, height), Title = title }) 
+    public Game(int width, int height, string title) : base(GameWindowSettings.Default, new NativeWindowSettings() { Size = (width, height), Title = title, Location = (1000, 1000) }) 
     {
         xRat = width;
         yRat = height;
     }
     protected override void OnUpdateFrame(FrameEventArgs e)
     {
-        base.OnUpdateFrame(e);
-        frame += 1;
-        double now = stopwatch.Elapsed.TotalSeconds;
-        if (then == 0.0)
+        if (!paused)
         {
+            base.OnUpdateFrame(e);
+            frame += 1;
+            double now = stopwatch.Elapsed.TotalSeconds;
+            if (then == 0.0)
+            {
+                then = now;
+            }
+            double frameTime = now - then;
             then = now;
-        }
-        double frameTime = now - then;
-        then = now;
 
-        accumulator += frameTime;
+            accumulator += frameTime;
 
-        while (accumulator >= Physics.dTime)
-        {
-            Physics.Gravity((float)Physics.dTime);
-            accumulator -= Physics.dTime;
-            foreach (Body body in Body.allBodies)
+            while (accumulator >= Physics.dTime)
             {
-                //body.radius = body.velocity.Length;
+                Physics.Gravity((float)Physics.dTime);
+                accumulator -= Physics.dTime;
+                foreach (Body body in Body.allBodies)
+                {
+                    //body.radius = body.velocity.Length;
+                }
+                
             }
-            //Console.WriteLine($"Real Time: {stopwatch.Elapsed.TotalSeconds}, Accumulator: {accumulator}");
-        }
 
-        
-        if ((int)stopwatch.Elapsed.TotalMilliseconds >= pollTime)
-        {
-            //Console.WriteLine("OK");
-            //PipeServer.SendMessage("MyNamedPipe", "Hello from the server!");
-            Physics.Repeat();
-            foreach (Body body in Body.allBodies)
+
+
+            if ((int)stopwatch.Elapsed.TotalMilliseconds >= pollTime)
             {
-                //body.path.Add(body.position);
-                body.path.Add(body.position[0]);
-                body.path.Add(body.position[1]);
-                body.path.Add(body.position[2]);
+                
+                //PipeServer.SendMessage("MyNamedPipe", "Hello from the server!");
+                Physics.Repeat();
+
+                pollTime += 5;
 
             }
-            pollTime += 5;
-            
-        }
 
-        if ((int) stopwatch.Elapsed.TotalMilliseconds >= trailTime)
-        {
-            //new Sphere();
+            if ((int)stopwatch.Elapsed.TotalMilliseconds >= trailTime)
+            {
+                if (Body.trails)
+                {
+                    trailTime += 200;
+
+                    for (int i = 0; i < Body.allBodies.Count; i++)
+                    {
+                        Body.allPaths[Body.pathIndex] = Body.allBodies[i].position[0];
+                        Body.allPaths[Body.pathIndex + 1] = Body.allBodies[i].position[1];
+                        Body.allPaths[Body.pathIndex + 2] = Body.allBodies[i].position[2];
+
+                        Body.pathCount = Body.pathIndex / 3;
+                        Body.pathIndex += 3;
+                        Body.trailIndices[Body.trailIndiceCount] = (uint)Body.trailIndiceCount;
+                        Body.trailIndices[Body.trailIndiceCount + 1] = (uint)Body.trailIndiceCount + (uint)Body.allBodies.Count;
+                        Body.trailIndiceCount += 2;
+
+
+                    }
+
+
+                    GL.BindBuffer(BufferTarget.ArrayBuffer, Graphics.trailVBO);
+                    GL.BufferSubData(
+                        BufferTarget.ArrayBuffer,
+                        IntPtr.Zero,
+                        Body.pathIndex * sizeof(float),
+                        Body.allPaths
+                    );
+                }
+
+            }
         }
 
         if (KeyboardState.IsKeyDown(Keys.Escape))
@@ -129,6 +154,16 @@ public class Game : GameWindow
             {
                 planetCam -= 1;
             }
+        }
+        if (KeyboardState.IsKeyPressed(Keys.Space))
+        {
+            paused = !paused;
+        }
+        if (KeyboardState.IsKeyPressed(Keys.T))
+        {
+            Body.trails = !Body.trails;
+            Body.pathCount = Body.pathIndex = 0;
+            Array.Fill(Body.allPaths, 0);
         }
         for (int i = 0; i < Body.allBodies.Count; i++)
         {
@@ -179,10 +214,12 @@ public class Game : GameWindow
         camera.Movement(e, input, mb);
 
 
-
-        base.OnRenderFrame(e);
-        Graphics.RenderUpdate(e, camera);
-        SwapBuffers();
+        if (!paused)
+        {
+            base.OnRenderFrame(e);
+            Graphics.RenderUpdate(e, camera);
+            SwapBuffers();
+        }
     }
 
     
