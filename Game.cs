@@ -6,6 +6,7 @@ using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using System.Linq;
 using System.Diagnostics;
+using System.IO;
 using System.IO.MemoryMappedFiles;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -35,10 +36,11 @@ public class Game : GameWindow
 
 
 
-    public Game(int width, int height, string title) : base(GameWindowSettings.Default, new NativeWindowSettings() { Size = (width, height), Title = title, Location = (1000, 1000) }) 
+    public Game(int width, int height, string title) : base(GameWindowSettings.Default, new NativeWindowSettings() { Size = (width, height), Title = title, Location = (1000, 0) }) 
     {
         xRat = width;
         yRat = height;
+        Console.WriteLine(GL.GetString(StringName.Version));
     }
     protected override void OnUpdateFrame(FrameEventArgs e)
     {
@@ -81,35 +83,8 @@ public class Game : GameWindow
 
             if ((int)stopwatch.Elapsed.TotalMilliseconds >= trailTime)
             {
-                if (Body.trails)
-                {
-                    trailTime += 200;
-
-                    for (int i = 0; i < Body.allBodies.Count; i++)
-                    {
-                        Body.allPaths[Body.pathIndex] = Body.allBodies[i].position[0];
-                        Body.allPaths[Body.pathIndex + 1] = Body.allBodies[i].position[1];
-                        Body.allPaths[Body.pathIndex + 2] = Body.allBodies[i].position[2];
-
-                        Body.pathCount = Body.pathIndex / 3;
-                        Body.pathIndex += 3;
-                        Body.trailIndices[Body.trailIndiceCount] = (uint)Body.trailIndiceCount;
-                        Body.trailIndices[Body.trailIndiceCount + 1] = (uint)Body.trailIndiceCount + (uint)Body.allBodies.Count;
-                        Body.trailIndiceCount += 2;
-
-
-                    }
-
-
-                    GL.BindBuffer(BufferTarget.ArrayBuffer, Graphics.trailVBO);
-                    GL.BufferSubData(
-                        BufferTarget.ArrayBuffer,
-                        IntPtr.Zero,
-                        Body.pathIndex * sizeof(float),
-                        Body.allPaths
-                    );
-                }
-
+                trailTime += 50;
+                Trail.TrailUpdate();
             }
         }
 
@@ -134,7 +109,7 @@ public class Game : GameWindow
         }
         if (KeyboardState.IsKeyPressed(Keys.Right))
         {
-            if (planetCam + 1 > Body.allBodies.Count - 1)
+            if (planetCam + 1 > Body.count - 1)
             {
                 planetCam = 0;
                 Console.WriteLine("Here");
@@ -148,7 +123,7 @@ public class Game : GameWindow
         {
             if (planetCam - 1 < 0)
             {
-                planetCam = Body.allBodies.Count - 1;
+                planetCam = Body.count - 1;
             }
             else
             {
@@ -161,11 +136,9 @@ public class Game : GameWindow
         }
         if (KeyboardState.IsKeyPressed(Keys.T))
         {
-            Body.trails = !Body.trails;
-            Body.pathCount = Body.pathIndex = 0;
-            Array.Fill(Body.allPaths, 0);
+            
         }
-        for (int i = 0; i < Body.allBodies.Count; i++)
+        for (int i = 0; i < Body.count; i++)
         {
             Graphics.instanceMatrices[i] =
                 Matrix4.CreateScale(Body.allBodies[i].radius) *
@@ -192,18 +165,55 @@ public class Game : GameWindow
         // Build sphere geometry
         planetSphere = new Sphere(2f, 24, 12, Color4.Black);
 
-        planetA = new Body(new Vector3(0), new Vector3(0), 35f, 1000f, Color4.Yellow, "Planet A");
-        Body planetB = new Body(new Vector3(200, 0, 0), new Vector3(0, 0, -450), 2f, 20f, Color4.Purple, "Planet B");
-        Body planetC = new Body(new Vector3(350), new Vector3(0, 0, -300), 8, 40, Color4.Blue, "Planet C");
+        planetA = new Body(new Vector3(0),
+                            new Vector3(0),
+                            35f,
+                            60000f,
+                            Color4.Yellow,
+                            "Planet A");
+        Body planetB = new Body(new Vector3(5000, 0, 0),
+                                new Vector3(0, 0, 900),
+                                10,
+                                500,
+                                Color4.Blue, 
+                                "Planet B");
+        Body planetC = new Body(planetB.position + new Vector3(planetB.radius * 20, 0, 0),
+                                planetB.velocity + new Vector3(0, 0, 1200),
+                                4,
+                                6.17f,
+                                Color4.White,
+                                "Moon");
+
+
+        //for (int i = -50; i < 50; i++)
+        //{
+        //    new Body(new Vector3(3500 + (i * 14), i, 0),
+        //                new Vector3(0, i, 500 + (i * 5)),
+        //                5,
+        //                0.01f,
+        //                Color4.Gray,
+        //                $"Asteroid {i}");
+        //}
+
+        //Body planetB = new Body(new Vector3(200, 0, 0), new Vector3(0, 0, -450), 2f, 20f, Color4.Purple, "Planet B");
+        //Body planetC = new Body(new Vector3(350), new Vector3(0, 0, -300), 8, 40, Color4.Blue, "Planet C");
+        //Body planetD = new Body(new Vector3(0, 0, 500), new Vector3(160, 0, 0), 3, 15, Color4.Green, "Planet D");
+
+        
 
         //PipeServer.sMain();
         camera = new Camera();
 
+        //Body.shape = new Sphere(Body.radius, 24, 12, color);
+
+
+        Trail.TrailStart(Body.count, Trail.maxTrailLength);
 
         then = 0.0;
         Graphics.Start(camera);
   
         camera.distance = Body.allBodies.MaxBy(b => b.radius).radius * 25;
+
         stopwatch.Start();
     }
 
@@ -280,11 +290,12 @@ public class Game : GameWindow
         
     protected override void OnUnload()
     {
-        //PipeServer.namedPipeServer.Dispose();
         graphs.Kill();
         MemoryMappedFile memoryMappedFile = MemoryMappedFile.CreateOrOpen("MyMappedFile", 1024); // Name and size
         memoryMappedFile.Dispose();
         base.OnUnload();
         Graphics.shader.Dispose();
+        Graphics.gridShader.Dispose();
+        Graphics.trailShader.Dispose();
     }
 } 

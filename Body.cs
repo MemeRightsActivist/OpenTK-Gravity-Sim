@@ -4,6 +4,8 @@ using ScottPlot.DataViews;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -18,15 +20,12 @@ public class Body
     public float orbitalEnergy;
     public Color4 color;
     public string name;
+    public BodyStruct metaData;
+    public static int count = 0;
     public Sphere shape;
-    public List<Vector3> path = new List<Vector3>();
     public static float[] allPaths;
-    public static int pathIndex = 0;
-    public static int pathCount = 0;
-    public static uint[] trailIndices;
-    public static int trailIndiceCount = 0;
-    public static uint trailIndiceIndex = 0;
-    public static bool trails = true;
+    
+    
 
     public static List<Body> allBodies = new List<Body>();
 
@@ -38,14 +37,34 @@ public class Body
         this.mass = mass * 500f;
         this.color = color;
         this.name = name;
-
-        shape = new Sphere(radius, 24, 12, color);
+        this.metaData = new BodyStruct(0, 0, color);
         allBodies.Add(this);
-        allPaths = new float[allBodies.Count * 3 * 100000];
-        trailIndices = new uint[allBodies.Count * 200000];
+
 
         
+        count++;
+        
     }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    public struct BodyStruct
+    {
+        public int head;
+        public int count;
+        public Vector2 pad;
+        public Vector4 color;
+
+
+        public BodyStruct(int head, int count, Color4 color)
+        {
+            this.head = head;
+            this.count = count;
+            this.color = (Vector4)color;
+            this.pad = Vector2.Zero;
+        }
+    }
+
+    
 
     public void OrbitalEnergy()
     {
@@ -63,7 +82,7 @@ public class Body
 
     public void TrailAdd()
     {
-        this.path.Add(position);
+        
     }
 }
 

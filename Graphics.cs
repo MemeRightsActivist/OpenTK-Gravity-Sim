@@ -22,18 +22,20 @@ namespace OpenTKSim
         public static Matrix4 projection;
         public static Shader shader;
         public static Shader gridShader;
+        public static Shader trailShader;
         public static Texture texture;
         public static Grid grid;
         public static int instanceVBO;
         public static int gridVAO;
         public static int gridVBO;
         public static int trailVAO;
+        public static int trailColorVBO;
         public static int trailVBO;
         public static int trailEBO;
         public static Matrix4[] instanceMatrices;
         public static List<int> allVBOs = new List<int>();
         public static Sphere planetSphere;
-        
+
 
 
         public static void Start(Camera camera)
@@ -43,26 +45,24 @@ namespace OpenTKSim
 
             shader = new Shader("shader.vert", "shader.frag");
             gridShader = new Shader("grid.vert", "grid.frag");
-            texture = new Texture("Dream.jpg");
+            trailShader = new Shader("trail.vert", "trail.frag");
             grid = new Grid();
             planetSphere = Game.planetSphere;
 
-            for (int i = 0; i < Body.trailIndices.Length; i += 2)
-            {
-                Body.trailIndices[i] = Body.trailIndiceIndex;
-                Body.trailIndices[i + 1] = (uint)(Body.trailIndiceIndex + Body.allBodies.Count);
-                
-
-                Body.trailIndiceIndex++;
-            }
+            // NOTE: do not pre-fill trail indices here. Indices are generated while
+            // appending vertices (in Game.OnUpdateFrame) because the vertex layout
+            // is time-major / interleaved (planet0@t0, planet1@t0, ..., planet0@t1, ...)
+            // and index values must reference the correct vertex indices as they are
+            // added. The EBO is allocated below; we will update actual index bytes
+            // with BufferSubData when indices change.
 
 
 
 
 
 
-            Vector4[] instanceColors = new Vector4[Body.allBodies.Count];
-            for (int i = 0; i < Body.allBodies.Count; i++)
+            Vector4[] instanceColors = new Vector4[Body.count];
+            for (int i = 0; i < Body.count; i++)
             {
                 instanceColors[i] = new Vector4(Body.allBodies[i].color.R, Body.allBodies[i].color.G, Body.allBodies[i].color.B, Body.allBodies[i].color.A);
             }
@@ -75,15 +75,15 @@ namespace OpenTKSim
                           BufferUsageHint.DynamicDraw);
 
             // Build transforms for each sphere instance
-            instanceMatrices = new Matrix4[Body.allBodies.Count];
-            for (int i = 0; i < Body.allBodies.Count; i++)
+            instanceMatrices = new Matrix4[Body.count];
+            for (int i = 0; i < Body.count; i++)
             {
                 instanceMatrices[i] =
                     Matrix4.CreateScale(Body.allBodies[i].radius) *
                     Matrix4.CreateTranslation(Body.allBodies[i].position);
             }
 
-            
+
 
 
 
@@ -153,7 +153,7 @@ namespace OpenTKSim
 
             Grid.GridA();
 
-            
+
 
             // Grid VAO
             gridVAO = GL.GenVertexArray();
@@ -178,18 +178,37 @@ namespace OpenTKSim
             GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
             GL.BindVertexArray(0);
 
+
+
+            //Trail SSBO 0
+
+
+
             // Trail VAO
-            trailVAO = GL.GenVertexArray();
-            GL.BindVertexArray(trailVAO);
 
-            trailVBO = GL.GenBuffer();
-            GL.BindBuffer(BufferTarget.ArrayBuffer, trailVBO);
-            GL.BufferData(BufferTarget.ArrayBuffer, Body.allPaths.Length * sizeof(float), Body.allPaths, BufferUsageHint.StaticDraw);
+            //trailVAO = GL.GenVertexArray();
+            //GL.BindVertexArray(trailVAO);
 
-            // === EBO for indices (bound while VAO is active!) ===
-            trailEBO = GL.GenBuffer();
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, trailEBO);
-            GL.BufferData(BufferTarget.ElementArrayBuffer, Body.trailIndices.Length * sizeof(uint), Body.trailIndices, BufferUsageHint.StaticDraw);
+            //trailColorVBO = GL.GenBuffer();
+            //GL.BindBuffer(BufferTarget.ArrayBuffer, trailColorVBO);
+            //GL.BufferData(BufferTarget.ArrayBuffer, Body.trailColors.Length * sizeof(float), Body.trailColors, BufferUsageHint.DynamicDraw);
+
+            //GL.EnableVertexAttribArray(2); // choose a free attribute location
+            //GL.BindBuffer(BufferTarget.ArrayBuffer, trailColorVBO);
+            //GL.VertexAttribPointer(2, 4, VertexAttribPointerType.Float, false, 4*sizeof(float), 0);
+            ////GL.VertexAttribDivisor(2, 1); // <-- make it instanced
+
+            //trailVBO = GL.GenBuffer();
+            //GL.BindBuffer(BufferTarget.ArrayBuffer, trailVBO);
+            //// Allocate GPU storage for trail vertex positions (streamed). Use DynamicDraw
+            //// because we will update portions frequently via BufferSubData.
+            //GL.BufferData(BufferTarget.ArrayBuffer, Body.allPaths.Length * sizeof(float), IntPtr.Zero, BufferUsageHint.DynamicDraw);
+
+            //// === EBO for indices (bound while VAO is active!) ===
+            //trailEBO = GL.GenBuffer();
+            //GL.BindBuffer(BufferTarget.ElementArrayBuffer, trailEBO);
+            //// Allocate GPU storage for indices. We'll update with BufferSubData when indices are appended.
+            //GL.BufferData(BufferTarget.ElementArrayBuffer, Body.trailIndices.Length * sizeof(uint), IntPtr.Zero, BufferUsageHint.DynamicDraw);
 
 
 
@@ -205,7 +224,7 @@ namespace OpenTKSim
 
         public static void GetPlanetPositions(Vector4[] posRad, int count)
         {
-            
+
         }
 
         public static void RenderUpdate(FrameEventArgs e, Camera camera)
@@ -224,7 +243,7 @@ namespace OpenTKSim
 
 
 
-             
+
 
             // === Sphere drawing ===
             shader.Use();
@@ -237,8 +256,7 @@ namespace OpenTKSim
             loc = GL.GetUniformLocation(shader.Handle, "projection");
             GL.UniformMatrix4(loc, false, ref projection);
 
-            GL.ActiveTexture(TextureUnit.Texture0);
-            GL.BindTexture(TextureTarget.Texture2D, texture.Handle);
+
 
             // Bind VAO and draw all instances
             GL.BindVertexArray(VertexArrayObject);
@@ -246,7 +264,7 @@ namespace OpenTKSim
                                         planetSphere.indices.Length,
                                         DrawElementsType.UnsignedInt,
                                         IntPtr.Zero,
-                                        Body.allBodies.Count);
+                                        Body.count);
 
             GL.Enable(EnableCap.Blend);
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
@@ -259,29 +277,49 @@ namespace OpenTKSim
             GL.UniformMatrix4(loc, false, ref view);
             loc = GL.GetUniformLocation(gridShader.Handle, "projection");
             GL.UniformMatrix4(loc, false, ref projection);
-            
+
 
             GL.BindVertexArray(gridVAO);
             // Draw grid as lines using the element buffer
             GL.DrawElements(PrimitiveType.Lines, grid.gridIndices.Length, DrawElementsType.UnsignedInt, IntPtr.Zero);
 
+            // === Trail drawing ===
+            GL.Enable(EnableCap.Blend);
+            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+
+            trailShader.Use();
+            loc = GL.GetUniformLocation(trailShader.Handle, "model");
+            GL.UniformMatrix4(loc, false, ref model);
+            loc = GL.GetUniformLocation(trailShader.Handle, "view");
+            GL.UniformMatrix4(loc, false, ref view);
+            loc = GL.GetUniformLocation(trailShader.Handle, "projection");
+            GL.UniformMatrix4(loc, false, ref projection);
+
+            int maxLoc = GL.GetUniformLocation(trailShader.Handle, "maxTrailLength");
+            GL.Uniform1(maxLoc, Trail.maxTrailLength);
+
+            int piLoc = GL.GetUniformLocation(trailShader.Handle, "planetIndex");
+
+            // Bind SSBOs
+            GL.BindBufferBase(BufferRangeTarget.ShaderStorageBuffer, 0, Trail.trailsSSBO);
+            GL.BindBufferBase(BufferRangeTarget.ShaderStorageBuffer, 1, Trail.bodyMetaSSBO);
+
+            // Need an empty VAO for shader-based vertex pulling
+            if (trailVAO == 0)
+            {
+                trailVAO = GL.GenVertexArray();
+            }
             GL.BindVertexArray(trailVAO);
-            // Draw trails as lines
-            GL.DrawElements(PrimitiveType.Lines, Body.trailIndiceCount - Body.allBodies.Count, DrawElementsType.UnsignedInt, IntPtr.Zero);
 
-            //GL.DrawElements(PrimitiveType.Triangles, gridQuadIndices.Length, DrawElementsType.UnsignedInt, IntPtr.Zero);
+            for (int i = 0; i < Body.count; i++)
+            {
+                GL.Uniform1(piLoc, i);
+                int count = Trail.bodyMeta[i].count;
+                if (count > 1)
+                    GL.DrawArrays(PrimitiveType.LineStrip, 0, count);
+            }
 
-
-
-            // Restore state
-            GL.DepthMask(true);
-            GL.Disable(EnableCap.Blend);
-        }
-
-        public static void FrameUpdate()
-        {
-            
+            GL.BindVertexArray(0);
         }
     }
-    
 }
