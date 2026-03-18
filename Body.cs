@@ -15,8 +15,10 @@ public class Body
 {
     public Vector3 position;
     public Vector3 velocity;
+    public static float velocityOffset = 0.1f;
     public float radius;
     public float mass;
+    public static float massOffset = 500f;
     public float orbitalEnergy;
     public Color4 color;
     public string name;
@@ -32,9 +34,9 @@ public class Body
     public Body(Vector3 position, Vector3 velocity, float radius, float mass, Color4 color, string name)
     {
         this.position = position;
-        this.velocity = velocity * 0.1f;
+        this.velocity = velocity * velocityOffset;
         this.radius = radius;
-        this.mass = mass * 500f;
+        this.mass = mass * massOffset;
         this.color = color;
         this.name = name;
         this.metaData = new BodyStruct(0, 0, color);

@@ -28,13 +28,12 @@ public class Game : GameWindow
     public Matrix4[] instanceMatrices;
     public List<int> allVBOs = new List<int>();
 
+    public static Random random;
     double accumulator = 0.0;
     double then;
     public static int frame = 0;
     public static Process graphs;
     int planetCam = 1;
-
-
 
     public Game(int width, int height, string title) : base(GameWindowSettings.Default, new NativeWindowSettings() { Size = (width, height), Title = title, Location = (1000, 0) }) 
     {
@@ -159,47 +158,22 @@ public class Game : GameWindow
     protected override void OnLoad()
     {
         base.OnLoad();
+        random = new Random();
         MemoryMappedFile memoryMappedFile = MemoryMappedFile.CreateOrOpen("MyMappedFile", 1024); // Name and size
         graphs = Process.Start("C:\\Users\\johnl\\source\\repos\\WinFormsApp1\\bin\\Debug\\net8.0-windows\\WinFormsApp1.exe");
 
         // Build sphere geometry
         planetSphere = new Sphere(2f, 24, 12, Color4.Black);
 
-        planetA = new Body(new Vector3(0),
-                            new Vector3(0),
-                            35f,
-                            60000f,
-                            Color4.Yellow,
-                            "Planet A");
-        Body planetB = new Body(new Vector3(5000, 0, 0),
-                                new Vector3(0, 0, 900),
-                                10,
-                                500,
-                                Color4.Blue, 
-                                "Planet B");
-        Body planetC = new Body(planetB.position + new Vector3(planetB.radius * 20, 0, 0),
-                                planetB.velocity + new Vector3(0, 0, 1200),
-                                4,
-                                6.17f,
-                                Color4.White,
-                                "Moon");
-
-
-        //for (int i = -50; i < 50; i++)
-        //{
-        //    new Body(new Vector3(3500 + (i * 14), i, 0),
-        //                new Vector3(0, i, 500 + (i * 5)),
-        //                5,
-        //                0.01f,
-        //                Color4.Gray,
-        //                $"Asteroid {i}");
-        //}
+        SystemCreation.StarPlanet();
+        //SystemCreation.PMAstroids();
+        
 
         //Body planetB = new Body(new Vector3(200, 0, 0), new Vector3(0, 0, -450), 2f, 20f, Color4.Purple, "Planet B");
         //Body planetC = new Body(new Vector3(350), new Vector3(0, 0, -300), 8, 40, Color4.Blue, "Planet C");
         //Body planetD = new Body(new Vector3(0, 0, 500), new Vector3(160, 0, 0), 3, 15, Color4.Green, "Planet D");
 
-        
+
 
         //PipeServer.sMain();
         camera = new Camera();

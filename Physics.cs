@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 public class Physics
 {
     public static float gConstant = 1f;
-    static int dimensions = 3;
+    public static int dimensions = 3;
     public static float dTime = 1f / 120f;
     public int num = 0;
 
@@ -32,7 +32,7 @@ public class Physics
                 if (a != b)
                 {
                     
-                    float force = (((a.mass * b.mass) / Vector3.DistanceSquared(a.position, b.position)) * gConstant);
+                    float force = (((a.mass * b.mass) / MathF.Pow(Vector3.Distance(a.position, b.position), dimensions - 1)) * gConstant);
                     
                     a.velocity += ((Vector3.Normalize(b.position - a.position) * force) / a.mass) * step;
                     
