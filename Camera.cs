@@ -10,6 +10,7 @@ public class Camera
     public float yaw = -90f;
     public float pitch = 10f;
     public int scrollSpeed = 150;
+    
 
     public float distance = 100f;
 
@@ -55,7 +56,9 @@ public class Camera
         if (mb.ScrollDelta.Y != 0)
         {
             distance -= mb.ScrollDelta.Y * scrollSpeed;
-            distance = Math.Clamp(distance, 0.01f, 100000f);
+            distance = Math.Clamp(distance, Body.allBodies[Game.planetCam].radius * 5f, 100000f);
+            scrollSpeed = (int)(distance * 0.05);
+
         }
 
         UpdatePosition();

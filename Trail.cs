@@ -12,7 +12,7 @@ namespace OpenTKSim
         // SSBO 1: per-body metadata (head, count, color)
         public static Body.BodyStruct[] bodyMeta;
         public static int bodyMetaSSBO;
-
+        public static float opacity = 1f;
         public static int maxTrailLength = 10000;
 
         public static void TrailStart(int planets, int maxPoints)

@@ -278,6 +278,9 @@ namespace OpenTKSim
             loc = GL.GetUniformLocation(gridShader.Handle, "projection");
             GL.UniformMatrix4(loc, false, ref projection);
 
+            loc = GL.GetUniformLocation(gridShader.Handle, "opacity");
+            GL.Uniform1(loc, Grid.opacity);
+
 
             GL.BindVertexArray(gridVAO);
             // Draw grid as lines using the element buffer
@@ -295,8 +298,13 @@ namespace OpenTKSim
             loc = GL.GetUniformLocation(trailShader.Handle, "projection");
             GL.UniformMatrix4(loc, false, ref projection);
 
+            loc = GL.GetUniformLocation(trailShader.Handle, "onOff");
+            GL.Uniform1(loc, Trail.opacity);
+
             int maxLoc = GL.GetUniformLocation(trailShader.Handle, "maxTrailLength");
             GL.Uniform1(maxLoc, Trail.maxTrailLength);
+
+
 
             int piLoc = GL.GetUniformLocation(trailShader.Handle, "planetIndex");
 

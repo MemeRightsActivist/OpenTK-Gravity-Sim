@@ -33,7 +33,9 @@ public class Game : GameWindow
     double then;
     public static int frame = 0;
     public static Process graphs;
-    int planetCam = 1;
+    public static int planetCam = 0;
+    public static bool showGrid = true;
+    public static bool showTrails = true;
 
     public Game(int width, int height, string title) : base(GameWindowSettings.Default, new NativeWindowSettings() { Size = (width, height), Title = title, Location = (1000, 0) }) 
     {
@@ -111,7 +113,7 @@ public class Game : GameWindow
             if (planetCam + 1 > Body.count - 1)
             {
                 planetCam = 0;
-                Console.WriteLine("Here");
+                
             }
             else
             {
@@ -133,9 +135,30 @@ public class Game : GameWindow
         {
             paused = !paused;
         }
+        if (KeyboardState.IsKeyPressed(Keys.G))
+        {
+            showGrid = !showGrid;
+            if (showGrid)
+            {
+                Grid.opacity = 0.01f;
+            }
+            else
+            {
+                Grid.opacity = 0.0f;
+            }
+        }
         if (KeyboardState.IsKeyPressed(Keys.T))
         {
-            
+            showTrails = !showTrails;
+
+            if (showTrails)
+            {
+                Trail.opacity = 1f;
+            }
+            else
+            {
+                Trail.opacity = 0.0f;
+            }
         }
         for (int i = 0; i < Body.count; i++)
         {
@@ -163,11 +186,15 @@ public class Game : GameWindow
         graphs = Process.Start("C:\\Users\\johnl\\source\\repos\\WinFormsApp1\\bin\\Debug\\net8.0-windows\\WinFormsApp1.exe");
 
         // Build sphere geometry
-        planetSphere = new Sphere(2f, 24, 12, Color4.Black);
+        planetSphere = new Sphere(2f, 48, 24, Color4.Black);
 
-        SystemCreation.StarPlanet();
+        //SystemCreation.StarPlanet();
         //SystemCreation.PMAstroids();
-        
+        //SystemCreation.BinaryStars();
+        //SystemCreation.CircularBStars();
+        //SystemCreation.ClaudeSolarSystem();
+
+        SystemCreation.systemMethods[0]();
 
         //Body planetB = new Body(new Vector3(200, 0, 0), new Vector3(0, 0, -450), 2f, 20f, Color4.Purple, "Planet B");
         //Body planetC = new Body(new Vector3(350), new Vector3(0, 0, -300), 8, 40, Color4.Blue, "Planet C");

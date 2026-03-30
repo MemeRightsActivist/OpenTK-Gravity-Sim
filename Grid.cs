@@ -13,6 +13,7 @@ namespace OpenTKSim
     {
         public float[] gridVertices;
         public int gridSize = 500;
+        public static float opacity = 0.01f;
         float gridSpacing = 100f;
         // Number of vertices per side (2 * gridSize because loop runs from -gridSize..gridSize-1)
         public int side;
