@@ -37,6 +37,11 @@ public class Game : GameWindow
     public static bool showGrid = true;
     public static bool showTrails = true;
 
+    private double _timeAccumulator = 0;
+    private int _frameCount = 0;
+    private double _currentFps = 0;
+
+
     public Game(int width, int height, string title) : base(GameWindowSettings.Default, new NativeWindowSettings() { Size = (width, height), Title = title, Location = (1000, 0) }) 
     {
         xRat = width;
@@ -85,7 +90,10 @@ public class Game : GameWindow
             if ((int)stopwatch.Elapsed.TotalMilliseconds >= trailTime)
             {
                 trailTime += 50;
-                Trail.TrailUpdate();
+                if (showTrails)
+                {
+                    Trail.TrailUpdate();
+                }
             }
         }
 
@@ -150,15 +158,10 @@ public class Game : GameWindow
         if (KeyboardState.IsKeyPressed(Keys.T))
         {
             showTrails = !showTrails;
-
-            if (showTrails)
-            {
-                Trail.opacity = 1f;
-            }
-            else
-            {
-                Trail.opacity = 0.0f;
-            }
+        }
+        if (KeyboardState.IsKeyPressed(Keys.C))
+        {
+            Trail.ClearTrails();
         }
         for (int i = 0; i < Body.count; i++)
         {
@@ -223,6 +226,21 @@ public class Game : GameWindow
         var input = KeyboardState;
         var mb = MouseState;
         camera.Movement(e, input, mb);
+
+        _timeAccumulator += e.Time;
+        _frameCount++;
+
+        if (_timeAccumulator >= 1.0)
+        {
+            _currentFps = _frameCount / _timeAccumulator;
+
+            // Update the display (Title, UI, or Console)
+            Title = $"OpenTK Engine | FPS: {_currentFps:0}";
+
+            // Reset for the next second
+            _frameCount = 0;
+            _timeAccumulator = 0.0;
+        }
 
 
         if (!paused)

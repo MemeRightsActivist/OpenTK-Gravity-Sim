@@ -8,6 +8,11 @@ namespace OpenTKSim
 {
     public class Helpers
     {
+        public static void Print<T>(T parameter)
+        {
+            Console.WriteLine(parameter.ToString());
+        }
+
         /// <summary>
         /// Print a one-dimensional array in a rectangular (rows/columns) form to the console.
         /// If the caller does not provide a column count, an attempt is made to print as a square

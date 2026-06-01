@@ -78,13 +78,13 @@ namespace OpenTKSim
 
         public static void PMAstroids()
         {
-            int amount = 300 / 2;
+            int amount = 220 / 2;
             Body star = new Body(new Vector3(0),
                                 new Vector3(0),
                                 35f,
                                 60000f,
                                 Color4.Yellow,
-                                "Planet A");
+                                "Planet A", true);
             Body planet = new Body(new Vector3(5000, 0, 0),
                                     COrbit(star, 5000).velocity,
                                     10,
@@ -103,7 +103,7 @@ namespace OpenTKSim
             {
                 new Body(new Vector3(3500 + (i * 14), i, 0), // POSITION
                             new Vector3(0, i, COrbit(star, 3500 + (i  * 14)).speed + (i * 3)), // VELOCITY
-                            3, // RADIUS
+                            2, // RADIUS
                             0.01f, // MASS
                             Color4.Gray, // COLOR
                             $"Asteroid {i}"); // NAME

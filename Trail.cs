@@ -63,5 +63,29 @@ namespace OpenTKSim
             GL.BindBuffer(BufferTarget.ShaderStorageBuffer, bodyMetaSSBO);
             GL.BufferSubData(BufferTarget.ShaderStorageBuffer, IntPtr.Zero, bodyMeta.Length * 32, bodyMeta);
         }
+
+        public static void ClearTrails()
+        {
+            // Reset all trail data to zero
+            for (int i = 0; i < trailArray.Length; i++)
+            {
+                trailArray[i] = Vector4.Zero;
+            }
+
+            // Reset metadata for each body
+            for (int i = 0; i < Body.count; i++)
+            {
+                Body.allBodies[i].metaData.head = 0;
+                Body.allBodies[i].metaData.count = 0;
+                bodyMeta[i] = Body.allBodies[i].metaData;
+            }
+
+            // Upload cleared data to GPU
+            GL.BindBuffer(BufferTarget.ShaderStorageBuffer, trailsSSBO);
+            GL.BufferSubData(BufferTarget.ShaderStorageBuffer, IntPtr.Zero, trailArray.Length * 16, trailArray);
+
+            GL.BindBuffer(BufferTarget.ShaderStorageBuffer, bodyMetaSSBO);
+            GL.BufferSubData(BufferTarget.ShaderStorageBuffer, IntPtr.Zero, bodyMeta.Length * 32, bodyMeta);
+        }
     }
 }
