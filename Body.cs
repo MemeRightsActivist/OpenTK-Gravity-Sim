@@ -18,10 +18,11 @@ public class Body
     public static float velocityOffset = 0.1f;
     public float radius;
     public float mass;
+    
     public static float massOffset = 500f;
     public float orbitalEnergy;
     public Color4 color;
-    public bool emitsLight;
+    public bool isLightSource;
     public string name;
     public BodyStruct metaData;
     public static int count = 0;
@@ -32,7 +33,7 @@ public class Body
 
     public static List<Body> allBodies = new List<Body>();
 
-    public Body(Vector3 position, Vector3 velocity, float radius, float mass, Color4 color, string name, bool emitsLight = false)
+    public Body(Vector3 position, Vector3 velocity, float radius, float mass, Color4 color, string name, bool isLightSource = false)
     {
         this.position = position;
         this.velocity = velocity * velocityOffset;
@@ -41,7 +42,7 @@ public class Body
         this.color = color;
         this.name = name;
         this.metaData = new BodyStruct(0, 0, color);
-        this.emitsLight = emitsLight;
+        this.isLightSource = isLightSource;
         allBodies.Add(this);
 
 

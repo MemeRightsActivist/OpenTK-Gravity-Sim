@@ -35,7 +35,7 @@ public class Game : GameWindow
     public static Process graphs;
     public static int planetCam = 0;
     public static bool showGrid = true;
-    public static bool showTrails = true;
+    public static bool showTrails = false;
 
     private double _timeAccumulator = 0;
     private int _frameCount = 0;
@@ -309,6 +309,7 @@ public class Game : GameWindow
         
     protected override void OnUnload()
     {
+        Console.WriteLine("Simulation run time: " + stopwatch.Elapsed);
         graphs.Kill();
         MemoryMappedFile memoryMappedFile = MemoryMappedFile.CreateOrOpen("MyMappedFile", 1024); // Name and size
         memoryMappedFile.Dispose();

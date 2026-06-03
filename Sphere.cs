@@ -6,8 +6,6 @@ using System.Threading.Tasks;
 using OpenTK.Mathematics;
 using OpenTK.Graphics.OpenGL4;
 
-
-
 public class Sphere
 {
     public static List<Sphere> allSpheres = new List<Sphere>();
@@ -15,15 +13,15 @@ public class Sphere
     public uint[] indices;
     public int vbo;
     public float radius;
+    
     public Sphere(float radius, int sectorCount, int stackCount, Color4 color)
     {
         this.radius = radius;
-        //vbo = GL.GenBuffer();
         List<float> verts = new List<float>();
         List<uint> inds = new List<uint>();
 
         float x, y, z, xy;      // vertex position
-
+        float nx, ny, nz;       // vertex normal
 
         float sectorStep = 2 * MathF.PI / sectorCount;
         float stackStep = MathF.PI / stackCount;
@@ -44,16 +42,31 @@ public class Sphere
                 x = xy * MathF.Cos(sectorAngle);
                 y = xy * MathF.Sin(sectorAngle);
 
-                // texture coordinates
+                // normal (normalized position since sphere is at origin)
+                // Since we're building with 'radius', we can divide by it
+                nx = x / radius;
+                ny = y / radius;
+                nz = z / radius;
                 
+                // Alternative: calculate length and normalize
+                // float length = MathF.Sqrt(x*x + y*y + z*z);
+                // nx = x / length;
+                // ny = y / length;
+                // nz = z / length;
 
+                // Add position (3 floats)
                 verts.Add(x);
                 verts.Add(y);
                 verts.Add(z);
+                
+                // Add normal (3 floats)
+                verts.Add(nx);
+                verts.Add(ny);
+                verts.Add(nz);
             }
         }
 
-        // ----- build indices -----
+        // ----- build indices (unchanged) -----
         int k1, k2;
         for (int i = 0; i < stackCount; ++i)
         {
@@ -81,8 +94,5 @@ public class Sphere
         vertices = verts.ToArray();
         indices = inds.ToArray();
         allSpheres.Add(this);
-
     }
-
-
 }

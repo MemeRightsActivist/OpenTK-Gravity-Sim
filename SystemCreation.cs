@@ -49,8 +49,8 @@ namespace OpenTKSim
                                 new Vector3(0),
                                 35f,
                                 60000f,
-                                Color4.Yellow,
-                                "Planet A");
+                                Color4.White,
+                                "Planet A", true);
             Body planetB = new Body(new Vector3(5000, 0, 0),
                                     new Vector3(0, 0, 900),
                                     10,
@@ -83,7 +83,7 @@ namespace OpenTKSim
                                 new Vector3(0),
                                 35f,
                                 60000f,
-                                Color4.Yellow,
+                                Color4.White,
                                 "Planet A", true);
             Body planet = new Body(new Vector3(5000, 0, 0),
                                     COrbit(star, 5000).velocity,

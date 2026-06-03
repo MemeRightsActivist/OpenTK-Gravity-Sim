@@ -35,8 +35,10 @@ public class Physics
                     float force = (((a.mass * b.mass) / MathF.Pow(Vector3.Distance(a.position, b.position), dimensions - 1)) * gConstant);
                     
                     a.velocity += ((Vector3.Normalize(b.position - a.position) * force) / a.mass) * step;
-                    
-                    
+                    //b.velocity += ((Vector3.Normalize(a.position - b.position) * force) / a.mass) * step;
+
+
+
                 }
             }
             
@@ -44,7 +46,7 @@ public class Physics
         foreach (Body body in Body.allBodies)
         {
             body.position += body.velocity * step;
-
+            
         }
         //Body.allBodies[2].position = new Vector3(0);
         
