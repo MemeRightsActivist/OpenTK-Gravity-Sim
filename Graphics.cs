@@ -44,11 +44,11 @@ namespace OpenTKSim
         {
             GL.Enable(EnableCap.DepthTest);
             GL.ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-
-            shader = new Shader("shader.vert", "shader.frag");
-            gridShader = new Shader("grid.vert", "grid.frag");
-            trailShader = new Shader("trail.vert", "trail.frag");
-            //lightShader = new Shader("light.vert", "light.frag");
+            String s = "Shaders/";
+            shader = new Shader(s + "shader.vert", s + "shader.frag");
+            gridShader = new Shader(s + "grid.vert", s + "grid.frag");
+            trailShader = new Shader(s + "trail.vert", s + "trail.frag");
+            //lightShader = new Shader(s + "light.vert", s + "light.frag");
             grid = new Grid();
             planetSphere = Game.planetSphere;
 
