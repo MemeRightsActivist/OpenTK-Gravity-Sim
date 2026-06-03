@@ -12,7 +12,7 @@ namespace OpenTKSim
         // SSBO 1: per-body metadata (head, count, color)
         public static Body.BodyStruct[] bodyMeta;
         public static int bodyMetaSSBO;
-
+        public static float opacity = 1f;
         public static int maxTrailLength = 10000;
 
         public static void TrailStart(int planets, int maxPoints)
@@ -60,6 +60,30 @@ namespace OpenTKSim
             GL.BufferSubData(BufferTarget.ShaderStorageBuffer, IntPtr.Zero, trailArray.Length * 16, trailArray);
 
             // Upload metadata
+            GL.BindBuffer(BufferTarget.ShaderStorageBuffer, bodyMetaSSBO);
+            GL.BufferSubData(BufferTarget.ShaderStorageBuffer, IntPtr.Zero, bodyMeta.Length * 32, bodyMeta);
+        }
+
+        public static void ClearTrails()
+        {
+            // Reset all trail data to zero
+            for (int i = 0; i < trailArray.Length; i++)
+            {
+                trailArray[i] = Vector4.Zero;
+            }
+
+            // Reset metadata for each body
+            for (int i = 0; i < Body.count; i++)
+            {
+                Body.allBodies[i].metaData.head = 0;
+                Body.allBodies[i].metaData.count = 0;
+                bodyMeta[i] = Body.allBodies[i].metaData;
+            }
+
+            // Upload cleared data to GPU
+            GL.BindBuffer(BufferTarget.ShaderStorageBuffer, trailsSSBO);
+            GL.BufferSubData(BufferTarget.ShaderStorageBuffer, IntPtr.Zero, trailArray.Length * 16, trailArray);
+
             GL.BindBuffer(BufferTarget.ShaderStorageBuffer, bodyMetaSSBO);
             GL.BufferSubData(BufferTarget.ShaderStorageBuffer, IntPtr.Zero, bodyMeta.Length * 32, bodyMeta);
         }
