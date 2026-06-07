@@ -84,13 +84,13 @@ namespace OpenTKSim
                                 35f,
                                 60000f,
                                 Color4.White,
-                                "Planet A", true);
+                                "Star", true);
             Body planet = new Body(new Vector3(5000, 0, 0),
                                     COrbit(star, 5000).velocity,
                                     10,
                                     500,
                                     Color4.Blue,
-                                    "Planet B");
+                                    "Planet A");
             Body moon = new Body(planet.position + new Vector3(planet.radius * 15, 0, 0),
                                     COrbit(planet, planet.radius * 15).velocity,
                                     4,

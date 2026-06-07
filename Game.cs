@@ -33,7 +33,7 @@ public class Game : GameWindow
     double then;
     public static int frame = 0;
     public static Process graphs;
-    public static int planetCam = 0;
+    public static int planetCam = 1;
     public static bool showGrid = true;
     public static bool showTrails = false;
 
@@ -189,7 +189,7 @@ public class Game : GameWindow
         graphs = Process.Start("C:\\Users\\johnl\\source\\repos\\WinFormsApp1\\bin\\Debug\\net8.0-windows\\WinFormsApp1.exe");
 
         // Build sphere geometry
-        planetSphere = new Sphere(2f, 48, 24, Color4.Black);
+        planetSphere = new Sphere(2f, 96, 48, Color4.Black);
 
         //SystemCreation.StarPlanet();
         //SystemCreation.PMAstroids();

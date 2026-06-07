@@ -123,6 +123,4 @@ namespace OpenTKSim
             return sbTotal.ToString();
         }
     }
-
-    
 }

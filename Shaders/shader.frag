@@ -17,7 +17,7 @@ void main()
     // If this object emits light, just render it at full brightness
     if (isEmissive == 1)
     {
-        FragColor = vColor;
+        FragColor = vColor * 10.0;
         return;  // Skip all lighting calculations
     }
     
@@ -25,7 +25,7 @@ void main()
     vec3 norm = normalize(Normal);
     vec3 viewDir = normalize(viewPos - FragPos);
     
-    vec3 ambient = 0.0 * vColor.rgb;
+    vec3 ambient = 0.002 * vColor.rgb;
     vec3 result = ambient;
     
     for(int i = 0; i < numLights; i++)
