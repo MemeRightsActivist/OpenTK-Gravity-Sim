@@ -19,11 +19,13 @@ namespace OpenTKSim
         public static int VertexBufferObject;
         public static int VertexArrayObject;
         public static int ElementBufferObject;
+        public static int instanceColorVBO;
         public static Matrix4 projection;
         public static Shader shader;
         public static Shader gridShader;
         public static Shader trailShader;
         public static Shader lightShader;
+        public static Shader haloShader;
         public static Texture texture;
         public static Grid grid;
         public static int instanceVBO;
@@ -37,6 +39,7 @@ namespace OpenTKSim
         public static Matrix4[] instanceMatrices;
         public static List<int> allVBOs = new List<int>();
         public static Sphere planetSphere;
+        public static TextRenderer textRenderer;  // Add text rendering capability
 
 
 
@@ -48,9 +51,13 @@ namespace OpenTKSim
             shader = new Shader(s + "shader.vert", s + "shader.frag");
             gridShader = new Shader(s + "grid.vert", s + "grid.frag");
             trailShader = new Shader(s + "trail.vert", s + "trail.frag");
+            haloShader = new Shader(s + "halo.vert", s + "halo.frag");
             //lightShader = new Shader(s + "light.vert", s + "light.frag");
             grid = new Grid();
             planetSphere = Game.planetSphere;
+
+            // Initialize text renderer for on-screen text
+            textRenderer = new TextRenderer((int)Game.xRat, (int)Game.yRat);
 
             // NOTE: do not pre-fill trail indices here. Indices are generated while
             // appending vertices (in Game.OnUpdateFrame) because the vertex layout
@@ -70,7 +77,7 @@ namespace OpenTKSim
                 instanceColors[i] = new Vector4(Body.allBodies[i].color.R, Body.allBodies[i].color.G, Body.allBodies[i].color.B, Body.allBodies[i].color.A);
             }
 
-            int instanceColorVBO = GL.GenBuffer();
+            instanceColorVBO = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, instanceColorVBO);
             GL.BufferData(BufferTarget.ArrayBuffer,
                           instanceColors.Length * Vector4.SizeInBytes,
@@ -242,11 +249,11 @@ namespace OpenTKSim
 
 
 
-
+            // Get light-emitting bodies for both glow and lighting
+            List<Body> lightBodies = Body.allBodies.Where(b => b.isLightSource).ToList();
 
             // === Sphere drawing ===
             shader.Use();
-            List<Body> lightBodies = Body.allBodies.Where(b => b.isLightSource).ToList();
 
             // Pass light positions
             for (int i = 0; i < lightBodies.Count; i++)
@@ -279,13 +286,98 @@ namespace OpenTKSim
 
 
 
-            // Bind VAO and draw all instances
+            // Bind VAO and draw all sphere instances
             GL.BindVertexArray(VertexArrayObject);
             GL.DrawElementsInstanced(PrimitiveType.Triangles,
                                         planetSphere.indices.Length,
                                         DrawElementsType.UnsignedInt,
                                         IntPtr.Zero,
                                         Body.count);
+
+            // === Halo Rendering (glow effect for light sources) ===
+            if (lightBodies.Count > 0)
+            {
+                // Enable additive blending so glow ADDS brightness (doesn't dim the original)
+                GL.Enable(EnableCap.Blend);
+                GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.One);
+
+                // Disable depth testing so halo always renders (prevents z-fighting)
+                //GL.Disable(EnableCap.DepthTest);
+                GL.DepthMask(false);
+
+                haloShader.Use();
+
+                // Set uniforms (only once, shared by all layers)
+                loc = GL.GetUniformLocation(haloShader.Handle, "view");
+                GL.UniformMatrix4(loc, false, ref view);
+                loc = GL.GetUniformLocation(haloShader.Handle, "projection");
+                GL.UniformMatrix4(loc, false, ref projection);
+                loc = GL.GetUniformLocation(haloShader.Handle, "viewPos");
+                GL.Uniform3(loc, camera.camPos);
+
+                // Draw 10 layers of halos, from largest (furthest) to smallest (closest)
+                int numLayers = 100;
+                float minScale = 1.1f;  // Start just outside the original sphere
+                float maxScale = 10.0f;  // End at 4x the size
+                float maxAlpha = 0.99f;  // Maximum alpha for innermost layer
+                float minAlpha = 0.5f; // Minimum alpha for outermost layer
+
+                // Draw from LARGEST to SMALLEST (back to front for proper blending)
+                for (int layer = numLayers - 1; layer >= 0; layer--)
+                {
+                    float t = (float)layer / (numLayers - 1); // 0.0 to 1.0
+                    float scale = minScale + (maxScale - minScale) * (1.0f - t); // Decreases with layer
+                    float alpha = minAlpha + (maxAlpha - minAlpha) * t; // Increases with layer
+
+                    // Pass alpha to shader as a uniform
+                    loc = GL.GetUniformLocation(haloShader.Handle, "layerAlpha");
+                    GL.Uniform1(loc, alpha);
+
+                    // Create matrices for this layer
+                    Matrix4[] haloMatrices = new Matrix4[lightBodies.Count];
+                    Vector4[] haloColors = new Vector4[lightBodies.Count];
+
+                    for (int i = 0; i < lightBodies.Count; i++)
+                    {
+                        haloMatrices[i] =
+                            Matrix4.CreateScale(lightBodies[i].radius * scale) *
+                            Matrix4.CreateTranslation(lightBodies[i].position);
+
+                        haloColors[i] = new Vector4(
+                            lightBodies[i].color.R,
+                            lightBodies[i].color.G,
+                            lightBodies[i].color.B,
+                            1.0f);
+                    }
+
+                    // Upload instance data for this layer
+                    GL.BindBuffer(BufferTarget.ArrayBuffer, instanceVBO);
+                    GL.BufferSubData(BufferTarget.ArrayBuffer,
+                                     IntPtr.Zero,
+                                     haloMatrices.Length * Marshal.SizeOf<Matrix4>(),
+                                     haloMatrices);
+
+                    GL.BindBuffer(BufferTarget.ArrayBuffer, instanceColorVBO);
+                    GL.BufferSubData(BufferTarget.ArrayBuffer,
+                                     IntPtr.Zero,
+                                     haloColors.Length * Vector4.SizeInBytes,
+                                     haloColors);
+
+                    // Draw this layer
+                    GL.BindVertexArray(VertexArrayObject);
+                    GL.DrawElementsInstanced(PrimitiveType.Triangles,
+                                             planetSphere.indices.Length,
+                                             DrawElementsType.UnsignedInt,
+                                             IntPtr.Zero,
+                                             lightBodies.Count);
+                }
+
+                // Restore state
+                GL.Enable(EnableCap.DepthTest);
+                GL.DepthMask(true);
+                GL.Disable(EnableCap.Blend);
+            }
+
             if (Game.showGrid)
             {
                 GL.Enable(EnableCap.Blend);
@@ -354,6 +446,16 @@ namespace OpenTKSim
 
                 GL.BindVertexArray(0);
             }
+
+            // === Text Rendering (always rendered last, on top of everything) ===
+            // Example: Display FPS counter
+            textRenderer.DrawText($"FPS: {Game.frame}", 10, 10, 1.5f);
+
+            // Example: Display camera position
+            textRenderer.DrawText($"Camera: {camera.camPos.X:F1}, {camera.camPos.Y:F1}, {camera.camPos.Z:F1}", 10, 40, 1.0f);
+
+            // Example: Display body count
+            textRenderer.DrawText($"Bodies: {Body.count}", 10, 60, 1.0f);
         }
     }
 }
