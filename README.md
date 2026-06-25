@@ -8,6 +8,9 @@ hyperdimensional orbits and General Relativity, all
 while recording all information about the simulated
 scene so I can study it.
 
+<img width="1920" height="1044" alt="Screenshot 2026-06-06 171224" src="https://github.com/user-attachments/assets/9d01c637-84df-4e1e-b3de-7062d8f4c5bb" />
+<img width="1920" height="1044" alt="Screenshot 2026-06-25 063120" src="https://github.com/user-attachments/assets/704be858-408f-407c-adc0-338e6469d52e" />
+
 Unfortunately, because GR includes simulating photon
 physics, I am forced to use a rendering library
 advanced enough to simulate something so ridiculous.
